@@ -1,0 +1,20 @@
+{
+  "name": "@techrote/cals",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "description": "Optional OMP landscape authoring contract tools for CyberSand; no engine integration",
+  "omp": {
+    "extensions": [
+      "./src/index.ts"
+    ]
+  },
+  "files": [
+    "src",
+    "skills",
+    "agents",
+    "tools",
+    "README.md",
+    "fixtures"
+  ]
+}
