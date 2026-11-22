@@ -70,7 +70,9 @@ jobs:
               elif isinstance(x, list):
                   for v in x: yield from walk(v)
           hits = [d for d in walk(data) if d.get('name') == 'landscape-studio']
-          assert any('plugins/cals/skills/landscape-studio/SKILL.md' in str(h) for h in hits), hits
+          assert any(h.get('source', '').startswith('omp-plugins:') and
+                     str(h.get('filePath', '')).endswith('/skills/landscape-studio/SKILL.md')
+                     for h in hits), hits
           print('OMP PACKAGED SKILL DISCOVERED', hits[0])
           PY
       - name: Retain exact smoke evidence
