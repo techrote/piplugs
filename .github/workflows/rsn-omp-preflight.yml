@@ -86,7 +86,7 @@ jobs:
       - name: Validate four read-only role manifests (source only)
         shell: pwsh
         run: |
-          bun -e "const fs = require('node:fs'); const base='plugins/rsn-omp/agents/'; for (const n of ['rsn-causal','rsn-moe','rsn-evaluator','rsn-custodian']) { const s=fs.readFileSync(base+n+'.md','utf8'); const match=s.match(/^---\n([\s\S]*?)\n---\n/); if(!match) throw Error('Invalid frontmatter '+n); const m=Bun.YAML.parse(match[1]); if(m.name!==n || !m.description || String(m.tools).replaceAll(' ','')!=='read,grep,find') throw Error('Invalid role/privileged built-in tools '+n); console.log('RSN ROLE MANIFEST VERIFIED',n); }"
+          bun -e "const fs = require('node:fs'); const base='plugins/rsn-omp/agents/'; for (const n of ['rsn-causal','rsn-moe','rsn-evaluator','rsn-custodian']) { const s=fs.readFileSync(base+n+'.md','utf8'); const match=s.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/); if(!match) throw Error('Invalid frontmatter '+n); const m=Bun.YAML.parse(match[1]); if(m.name!==n || !m.description || String(m.tools).replaceAll(' ','')!=='read,grep,find') throw Error('Invalid role/privileged built-in tools '+n); console.log('RSN ROLE MANIFEST VERIFIED',n); }"
           if ($LASTEXITCODE -ne 0) { throw 'Role frontmatter check failed' }
       - name: Upload OMP discovery evidence only (no weights or API credentials)
         if: always()
