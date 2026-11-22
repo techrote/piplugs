@@ -2,6 +2,18 @@
 
 Planning and development home for **Oh-My-PI (OMP) extensions, skills and integrations**.
 
+## Current priority: RustySpork / Oh-My-PI (RSN-OMP-001)
+
+**Draft/HOLD — source-grounded research authoring and offline proposal validation, not model surgery.**
+
+The active development candidate is [RSN-OMP-001](proposals/rustyspork-omp/README.md), an optional OMP plugin in [`plugins/rsn-omp`](plugins/rsn-omp/README.md). Its initial responsibility is to coordinate safe *research proposals* for reblitteration/Funnel and source-exact LFM2.5-24B REAP expert compaction. The deterministic experiment controller, immutable donor custody, tensor edits, CUDA inference and benchmarks belong to [RustySpork](https://github.com/techrote/rustyspork-neurotzacken), not to the OMP plugin.
+
+[Chlaude-GPTopus](https://github.com/techrote/Chlaude-GPTopus) is a potential donor of **tested policy and accounting logic**, including its Draft/HOLD ULTRA stack; CALS must not silently import those native Claude Code bridges or claim them qualified for OMP. No paid-provider dispatch, weights download, GGUF modification or externally published model result is enabled by this initial slice.
+
+### Paused: CALS-001 / CyberSand
+
+CyberSand landscape-swarm planning and the existing CALS Draft PR remain **HOLD** with no further product work in this pivot. The documents below are retained for future reference, not the active piplugs priority.
+
 ## Active proposal: CyberSand Landscape Swarm (CALS-001)
 
 **Status: DESIGN / NOT IMPLEMENTED.** This repository currently contains a source-grounded architecture and implementation programme, **not** an installed or working OMP plugin.

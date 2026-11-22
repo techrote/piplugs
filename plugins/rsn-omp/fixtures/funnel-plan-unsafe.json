@@ -1,0 +1,76 @@
+{
+  "authority": {
+    "allow_model_inference": false,
+    "allow_network_download": false,
+    "allow_paid_provider": false,
+    "allow_weight_write": false,
+    "immutable_donor": true,
+    "max_paid_usd": 0,
+    "max_runtime_seconds": 60,
+    "mode": "proposal-only",
+    "owner_approval_for_promotion": true
+  },
+  "evaluation": {
+    "calibration_ids": [
+      "cal-opportunity",
+      "cal-controls"
+    ],
+    "calibration_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "control_arms": [
+      "donor",
+      "random-matched",
+      "naive-scale",
+      "activation-steer",
+      "lora-matched"
+    ],
+    "heldout_ids": [
+      "held-opportunity",
+      "held-negative",
+      "held-already-correct"
+    ],
+    "heldout_negative_ids": [
+      "held-negative"
+    ],
+    "heldout_positive_ids": [
+      "held-opportunity"
+    ],
+    "heldout_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  },
+  "fixture_only": true,
+  "operation": {
+    "edit": {
+      "max_delta_l2": 0.25,
+      "method": "low-rank-upstream",
+      "rank": 2,
+      "upstream_tensors": [
+        "layers.8.target_proj"
+      ]
+    },
+    "family": "reblitteration",
+    "objective": {
+      "already_correct_drift_penalty": 2,
+      "false_positive_penalty": 2,
+      "missed_opportunity_gain": 1,
+      "update_norm_penalty": 0.5
+    },
+    "seed": 1701,
+    "target": {
+      "feature_id": "verified-feature-candidate",
+      "frozen_tensors": [
+        "layers.8.target_proj"
+      ]
+    }
+  },
+  "output_root": "runs/rsn-funnel-toy-v1",
+  "phase": "PLAN_ONLY",
+  "proposal_id": "rsn-funnel-toy-v1",
+  "schema_id": "piplugs.rsn-omp.experiment-proposal",
+  "schema_version": 1,
+  "source": {
+    "filename": "frozen-toy.json",
+    "kind": "mock-toy",
+    "repository": "synthetic/linear-toy",
+    "revision": "0123456789abcdef0123456789abcdef01234567",
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  }
+}
