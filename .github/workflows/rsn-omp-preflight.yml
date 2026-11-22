@@ -51,6 +51,9 @@ jobs:
             if ($out.status -ne $status) { throw "Bad status in $sample" }
             Write-Output "RSN OFFLINE ${status}: ${sample}"
           }
+          # The final intentionally bad fixture exits 1. Reset only after verifying
+          # every expected rejection and output status above.
+          exit 0
       - name: Test local OMP extension command and path restrictions
         shell: pwsh
         run: |
