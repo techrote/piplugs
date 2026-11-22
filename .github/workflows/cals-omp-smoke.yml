@@ -1,0 +1,61 @@
+name: CALS OMP native skill discovery smoke
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/cals-omp-smoke.yml'
+      - '.omp/skills/landscape-studio/**'
+      - 'plugins/cals/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-skill-discovery:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.4'
+      - name: Install pinned OMP CLI for smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          bun install --global '@oh-my-pi/pi-coding-agent@19.1.0'
+          command -v omp
+          omp --version
+      - name: Verify native project skill discovery without model calls
+        shell: bash
+        run: |
+          set -euo pipefail
+          omp skill list --json > "$RUNNER_TEMP/cals-skills.json"
+          python3 - "$RUNNER_TEMP/cals-skills.json" <<'PY'
+          import json, sys
+          with open(sys.argv[1], encoding='utf-8') as f:
+              data = json.load(f)
+          hits = []
+          def inspect(value):
+              if isinstance(value, dict):
+                  if value.get("name") == "landscape-studio":
+                      hits.append(value)
+                  for sub in value.values():
+                      inspect(sub)
+              elif isinstance(value, list):
+                  for sub in value:
+                      inspect(sub)
+          inspect(data)
+          assert hits, "landscape-studio skill not discovered in OMP project"
+          print("OMP SKILL DISCOVERED", [(h.get("name"),h.get("filePath") or h.get("path")) for h in hits])
+          PY
+      - name: Retain exact smoke evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cals-omp-smoke-${{ github.run_number }}
+          retention-days: 7
+          if-no-files-found: warn
+          path: ${{ runner.temp }}/cals-skills.json
