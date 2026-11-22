@@ -18,6 +18,10 @@ Start with [CALS-001 proposal overview](proposals/cybersand-landscape-swarm/READ
 | [First landscape pilot](proposals/cybersand-landscape-swarm/PILOT.md) | Worked 2048×1024 pilot, collaboration choreography, output requirements and evaluation |
 | [Source ledger](proposals/cybersand-landscape-swarm/SOURCES.md) | Inspected repositories and files, versions, established facts, uncertainties and further research |
 
+### Research programme
+
+- [CALS-RESEARCH-001 — Beyond orchestration](research/CALS-RESEARCH-001.md): ten architectural-intelligence directions, four controlled experiments (experience-first, structural grammar, physics-led design, adaptive swarm), evaluation controls and dependencies. Research is recorded; experiments are not yet executed.
+
 ### Project guardrails
 
 - **No CyberSand changes** in this planning delivery; no second World, simulation kernel, editor, network server or browser port.
