@@ -75,6 +75,30 @@ jobs:
                      for h in hits), hits
           print('OMP PACKAGED SKILL DISCOVERED', hits[0])
           PY
+      - name: Verify OMP discovers read-only CALS task agents
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/cals-independent-consumer"
+          export CALS_OMP_ENTRY="$(readlink -f "$(command -v omp)")"
+          bun - <<'JS'
+          import { dirname, join } from 'node:path';
+          import { pathToFileURL } from 'node:url';
+          const entry = process.env.CALS_OMP_ENTRY;
+          if (!entry?.endsWith('/src/cli.ts')) throw new Error('Unrecognized OMP CLI layout: ' + entry);
+          const discovery = await import(pathToFileURL(join(dirname(entry),'task','discovery.ts')).href);
+          const result = await discovery.discoverAgents(process.cwd());
+          const expected = ['cals-architect','cals-environment','cals-traversal','cals-critic'];
+          for (const name of expected) {
+            const agent = result.agents.find(a => a.name === name);
+            if (!agent) throw new Error('OMP task agent missing: ' + name);
+            if (!Array.isArray(agent.tools) || agent.tools.length === 0 ||
+                agent.tools.some(t => !['read','grep','find'].includes(t))) {
+              throw new Error('Unexpected privileged tool in ' + name + ': ' + JSON.stringify(agent.tools));
+            }
+            console.log('OMP AGENT DISCOVERED', name, agent.tools.join(','));
+          }
+          JS
       - name: Retain exact smoke evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
