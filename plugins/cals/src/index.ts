@@ -20,6 +20,10 @@ async function checkFixture(raw: string, ctx: ExtensionCommandContext): Promise<
     return;
   }
   const candidate = resolve(ctx.cwd, filename);
+  if (!within(candidate, resolve(ctx.cwd))) {
+    ctx.ui.notify("CALS check accepts files inside the current workspace only", "error");
+    return;
+  }
   try {
     // Resolve symlinks before reading anything: a lexical inside-path can escape.
     const [workspaceReal, candidateReal] = await Promise.all([
