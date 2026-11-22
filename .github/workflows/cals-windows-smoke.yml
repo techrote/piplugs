@@ -1,0 +1,69 @@
+name: CALS Windows OMP package preflight
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/cals-windows-smoke.yml'
+      - 'plugins/cals/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-smoke:
+    runs-on: windows-2025
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.4'
+      - name: Install pinned OMP and confirm Python interpreter
+        shell: pwsh
+        run: |
+          bun install --global '@oh-my-pi/pi-coding-agent@19.1.0'
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          omp --version
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          py -3 --version
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+      - name: Run Python contract regression suite
+        shell: pwsh
+        run: |
+          py -3 -m unittest discover -s plugins/cals/tests -v
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+      - name: Run OMP extension command tests on Windows
+        shell: pwsh
+        run: |
+          bun test plugins/cals/tests/extension.test.ts
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+      - name: Link package from an unrelated project
+        shell: pwsh
+        run: |
+          $tempDir = Join-Path $env:RUNNER_TEMP 'cals-independent-windows'
+          New-Item -ItemType Directory -Force -Path $tempDir | Out-Null
+          Push-Location $tempDir
+          try {
+            omp plugin link (Join-Path $env:GITHUB_WORKSPACE 'plugins\cals')
+            if ($LASTEXITCODE -ne 0) { exit 1 }
+            omp plugin list
+            if ($LASTEXITCODE -ne 0) { exit 1 }
+            $skillPath = Join-Path $env:RUNNER_TEMP 'cals-windows-skills.json'
+            omp skill list --json | Out-File -FilePath $skillPath -Encoding utf8
+            if ($LASTEXITCODE -ne 0) { exit 1 }
+            $raw = Get-Content -Raw -Path $skillPath
+            $data = $raw | ConvertFrom-Json
+            if ($raw -notmatch '"name"\s*:\s*"landscape-studio"') { throw "Packaged CALS skill not found on Windows" }
+            if ($raw -notmatch 'omp-plugins:') { throw "CALS skill not discovered through installed plugin" }
+            Write-Output "CALS WINDOWS PLUGIN SKILL DISCOVERED"
+          } finally { Pop-Location }
+      - name: Retain Windows smoke evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cals-windows-smoke-${{ github.run_number }}
+          retention-days: 7
+          if-no-files-found: warn
+          path: ${{ runner.temp }}/cals-windows-skills.json
