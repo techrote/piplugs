@@ -1,0 +1,106 @@
+name: CALS OMP native skill and plugin smoke
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/cals-omp-smoke.yml'
+      - '.omp/skills/landscape-studio/**'
+      - 'plugins/cals/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-skill-discovery:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.4'
+      - name: Install pinned OMP CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          bun install --global '@oh-my-pi/pi-coding-agent@19.1.0'
+          command -v omp
+          omp --version
+      - name: Verify native project skill discovery without model calls
+        shell: bash
+        run: |
+          set -euo pipefail
+          omp skill list --json > "$RUNNER_TEMP/cals-skills.json"
+          python3 - "$RUNNER_TEMP/cals-skills.json" <<'PY'
+          import json, sys
+          with open(sys.argv[1], encoding='utf-8') as f:
+              data = json.load(f)
+          def walk(x):
+              if isinstance(x, dict):
+                  yield x
+                  for v in x.values(): yield from walk(v)
+              elif isinstance(x, list):
+                  for v in x: yield from walk(v)
+          hits = [d for d in walk(data) if d.get('name') == 'landscape-studio']
+          assert hits, 'landscape-studio project skill not found'
+          print('OMP PROJECT SKILL DISCOVERED', hits[0])
+          PY
+      - name: Test optional OMP extension command registration
+        shell: bash
+        run: bun test plugins/cals/tests/extension.test.ts
+      - name: Verify plugin link and independent skill discovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/cals-independent-consumer"
+          cd "$RUNNER_TEMP/cals-independent-consumer"
+          omp plugin link "$GITHUB_WORKSPACE/plugins/cals"
+          omp plugin list
+          omp skill list --json > "$RUNNER_TEMP/cals-packaged-skills.json"
+          python3 - "$RUNNER_TEMP/cals-packaged-skills.json" <<'PY'
+          import json, sys
+          with open(sys.argv[1], encoding='utf-8') as f:
+              data = json.load(f)
+          def walk(x):
+              if isinstance(x, dict):
+                  yield x
+                  for v in x.values(): yield from walk(v)
+              elif isinstance(x, list):
+                  for v in x: yield from walk(v)
+          hits = [d for d in walk(data) if d.get('name') == 'landscape-studio']
+          assert any(h.get('source', '').startswith('omp-plugins:') and
+                     str(h.get('filePath', '')).endswith('/skills/landscape-studio/SKILL.md')
+                     for h in hits), hits
+          print('OMP PACKAGED SKILL DISCOVERED', hits[0])
+          PY
+      - name: Validate packaged task-role manifests (source shape only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          bun - <<'JS'
+          import { readFileSync } from 'node:fs';
+          import { join } from 'node:path';
+          const root = join(process.env.GITHUB_WORKSPACE, 'plugins', 'cals', 'agents');
+          for (const name of ['cals-architect','cals-environment','cals-traversal','cals-critic']) {
+            const raw = readFileSync(join(root,name+'.md'),'utf8');
+            const match = raw.match(/^---\n([\s\S]*?)\n---\n/);
+            if (!match) throw new Error('Missing frontmatter: '+name);
+            const meta = Bun.YAML.parse(match[1]);
+            if (meta.name!==name || !meta.description) throw new Error('Bad role metadata '+name);
+            const tools = String(meta.tools).split(',').map(x=>x.trim());
+            if (tools.join(',')!=='read,grep,find') throw new Error('Unexpected built-in tool grant '+name);
+            console.log('CALS ROLE MANIFEST VERIFIED',name,tools.join(','));
+          }
+          JS
+      - name: Retain exact smoke evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cals-omp-smoke-${{ github.run_number }}
+          retention-days: 7
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/cals-skills.json
+            ${{ runner.temp }}/cals-packaged-skills.json

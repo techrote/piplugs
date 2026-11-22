@@ -1,0 +1,175 @@
+{
+  "proposals": [
+    {
+      "edits": [
+        [
+          40,
+          550,
+          300,
+          24,
+          58
+        ]
+      ],
+      "lease_generation": 1,
+      "region_id": "foundry",
+      "sockets": [
+        {
+          "height": 48,
+          "joint_id": "foundry-viaduct",
+          "joint_revision": 1,
+          "socket_id": "main-access",
+          "x": 736,
+          "y": 432
+        }
+      ],
+      "source_sha": "00cdb02f103265b6dc5224c68283e9a0c8cb449f",
+      "world_bible_revision": 1
+    },
+    {
+      "edits": [
+        [
+          790,
+          600,
+          400,
+          16,
+          58
+        ]
+      ],
+      "lease_generation": 1,
+      "region_id": "viaduct",
+      "sockets": [
+        {
+          "height": 48,
+          "joint_id": "foundry-viaduct",
+          "joint_revision": 1,
+          "socket_id": "main-access",
+          "x": 736,
+          "y": 456
+        },
+        {
+          "height": 48,
+          "joint_id": "viaduct-reservoir",
+          "joint_revision": 1,
+          "socket_id": "main-landing",
+          "x": 1360,
+          "y": 432
+        }
+      ],
+      "source_sha": "00cdb02f103265b6dc5224c68283e9a0c8cb449f",
+      "world_bible_revision": 1
+    },
+    {
+      "edits": [
+        [
+          1470,
+          630,
+          300,
+          30,
+          58
+        ]
+      ],
+      "lease_generation": 1,
+      "region_id": "reservoir",
+      "sockets": [
+        {
+          "height": 48,
+          "joint_id": "viaduct-reservoir",
+          "joint_revision": 1,
+          "socket_id": "main-landing",
+          "x": 1360,
+          "y": 432
+        }
+      ],
+      "source_sha": "00cdb02f103265b6dc5224c68283e9a0c8cb449f",
+      "world_bible_revision": 1
+    }
+  ],
+  "schema_id": "piplugs.cals.offline-contract-fixture",
+  "schema_version": 1,
+  "source_sha": "00cdb02f103265b6dc5224c68283e9a0c8cb449f",
+  "world_bible": {
+    "canvas": {
+      "height": 1024,
+      "orientation": "orthographic-side-elevation",
+      "width": 2048
+    },
+    "design_note": "Illustrative geometry only; sockets are agreed but no actual traversability is proved.",
+    "joints": [
+      {
+        "height": 48,
+        "id": "foundry-viaduct",
+        "left": "foundry",
+        "revision": 1,
+        "right": "viaduct",
+        "socket_id": "main-access",
+        "x": 736,
+        "y": 432
+      },
+      {
+        "height": 48,
+        "id": "viaduct-reservoir",
+        "left": "viaduct",
+        "revision": 1,
+        "right": "reservoir",
+        "socket_id": "main-landing",
+        "x": 1360,
+        "y": 432
+      }
+    ],
+    "lease_generations": {
+      "foundry": 1,
+      "reservoir": 1,
+      "viaduct": 1
+    },
+    "protected": [
+      [
+        40,
+        432,
+        1968,
+        48
+      ]
+    ],
+    "regions": [
+      {
+        "id": "foundry",
+        "rect": [
+          0,
+          0,
+          736,
+          1024
+        ]
+      },
+      {
+        "id": "viaduct",
+        "rect": [
+          736,
+          0,
+          624,
+          1024
+        ]
+      },
+      {
+        "id": "reservoir",
+        "rect": [
+          1360,
+          0,
+          688,
+          1024
+        ]
+      }
+    ],
+    "revision": 1,
+    "routes": [
+      {
+        "from_region": "foundry",
+        "id": "main-route",
+        "to_region": "reservoir",
+        "via_joint_ids": [
+          "foundry-viaduct",
+          "viaduct-reservoir"
+        ]
+      }
+    ],
+    "world_bible_sha256": "fb835b41d8c3cb60401afd74b14bd645c9171f4eb3adb0d6a7648bdca0f1221f"
+  }
+}
