@@ -1,0 +1,30 @@
+name: CALS offline contract preflight
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/cals-offline.yml'
+      - '.omp/skills/landscape-studio/**'
+      - 'plugins/cals/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Run offline region and socket contract tests
+        run: python3 -m unittest discover -s plugins/cals/tests -v
+      - name: Confirm known-good fixture and expected rejection
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 plugins/cals/tools/validate_contracts.py plugins/cals/fixtures/iron-wound-valid.json
+          if python3 plugins/cals/tools/validate_contracts.py plugins/cals/fixtures/iron-wound-mismatched-socket.json; then
+            echo 'Expected bad socket fixture was accepted' >&2
+            exit 1
+          fi
