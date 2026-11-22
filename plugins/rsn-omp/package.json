@@ -1,0 +1,9 @@
+{
+  "name": "@techrote/rustyspork-omp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "RustySpork neural surgery experiment planning and fail-closed offline intake for Oh-My-PI",
+  "omp": {"extensions": ["./src/index.ts"]},
+  "files": ["src", "tools", "fixtures", "skills", "agents", "README.md"]
+}

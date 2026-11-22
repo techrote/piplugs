@@ -1,0 +1,58 @@
+{
+  "authority": {
+    "allow_model_inference": false,
+    "allow_network_download": false,
+    "allow_paid_provider": false,
+    "allow_weight_write": false,
+    "immutable_donor": true,
+    "max_paid_usd": 0,
+    "max_runtime_seconds": 60,
+    "mode": "proposal-only",
+    "owner_approval_for_promotion": true
+  },
+  "evaluation": {
+    "calibration_ids": [
+      "cal-opportunity",
+      "cal-controls"
+    ],
+    "calibration_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "control_arms": [
+      "donor",
+      "random-removal",
+      "router-frequency",
+      "mixed-precision-no-prune"
+    ],
+    "heldout_ids": [
+      "held-opportunity",
+      "held-negative",
+      "held-already-correct"
+    ],
+    "heldout_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  },
+  "fixture_only": true,
+  "operation": {
+    "export_policy": "disabled-until-native-proof",
+    "family": "reap-pruning",
+    "ranking_method": "reap-candidate",
+    "remove_per_layer": 12,
+    "seed": 1701,
+    "topology": {
+      "active_experts_per_token": 4,
+      "experts_per_layer": 64,
+      "moe_layers": 38
+    }
+  },
+  "output_root": "runs/rsn-reap-metadata-v1",
+  "phase": "PLAN_ONLY",
+  "proposal_id": "rsn-reap-lfm-metadata-v1",
+  "schema_id": "piplugs.rsn-omp.experiment-proposal",
+  "schema_version": 1,
+  "source": {
+    "filename": "mock-lfm-q6.gguf",
+    "kind": "mock-gguf",
+    "quantization": "Q6_K",
+    "repository": "synthetic/lfm2-moe",
+    "revision": "0123456789abcdef0123456789abcdef01234567",
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  }
+}

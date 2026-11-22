@@ -1,0 +1,95 @@
+name: RustySpork OMP offline and package preflight
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/rsn-omp-preflight.yml'
+      - 'plugins/rsn-omp/**'
+      - 'proposals/rustyspork-omp/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rsn-host-smoke:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.4'
+      - name: Offline Python proposal and custody regressions
+        shell: pwsh
+        run: |
+          if ($IsWindows) {
+            py -3 -m unittest discover -s plugins/rsn-omp/tests -v
+          } else {
+            python3 -m unittest discover -s plugins/rsn-omp/tests -v
+          }
+          if ($LASTEXITCODE -ne 0) { throw 'RSN Python fixture tests failed' }
+      - name: Verify no-donor positive and negative fixtures
+        shell: pwsh
+        run: |
+          [string[]]$py = @('python3')
+          if ($IsWindows) { $py = @('py', '-3') }
+          foreach ($sample in @('funnel-plan.json','lfm-q6-reap-plan.json','funnel-plan-unsafe.json','lfm-q6-reap-plan-unsafe.json')) {
+            $path = Join-Path 'plugins/rsn-omp/fixtures' $sample
+            $args = @()
+            if ($py.Length -gt 1) { $args += $py[1] }
+            $args += @('plugins/rsn-omp/tools/validate_proposal.py', $path)
+            $result = & $py[0] @args
+            $expected = if ($sample.EndsWith('-unsafe.json')) { 1 } else { 0 }
+            if ($LASTEXITCODE -ne $expected) { throw "Incorrect proposal status $sample (expected exit $expected)" }
+            $out = $result | Out-String | ConvertFrom-Json
+            $status = if ($expected -eq 0) { 'PASS' } else { 'FAIL' }
+            if ($out.status -ne $status) { throw "Bad status in $sample" }
+            Write-Output "RSN OFFLINE ${status}: ${sample}"
+          }
+      - name: Test local OMP extension command and path restrictions
+        shell: pwsh
+        run: |
+          bun test plugins/rsn-omp/tests/extension.test.ts
+          if ($LASTEXITCODE -ne 0) { throw 'Bun OMP command tests failed' }
+      - name: Install pinned Oh-My-PI and link plugin in unrelated project
+        shell: pwsh
+        run: |
+          bun install --global '@oh-my-pi/pi-coding-agent@19.1.0'
+          if ($LASTEXITCODE -ne 0) { throw 'Pinned OMP install failed' }
+          omp --version
+          if ($LASTEXITCODE -ne 0) { throw 'OMP CLI missing' }
+          $consumer = Join-Path $env:RUNNER_TEMP 'rsn-omp-independent-project'
+          New-Item -ItemType Directory -Path $consumer -Force | Out-Null
+          Push-Location $consumer
+          try {
+            omp plugin link (Join-Path $env:GITHUB_WORKSPACE 'plugins/rsn-omp')
+            if ($LASTEXITCODE -ne 0) { throw 'OMP plugin link failed' }
+            omp plugin list
+            if ($LASTEXITCODE -ne 0) { throw 'OMP plugin list failed' }
+            $json = & omp skill list --json | Out-String
+            if ($LASTEXITCODE -ne 0) { throw 'OMP skill list failed' }
+            $file = Join-Path $env:RUNNER_TEMP 'rsn-omp-skills.json'
+            Set-Content -Path $file -Value $json -Encoding utf8
+            if ($json -notmatch '"name"\s*:\s*"rustyspork-lab"' -or $json -notmatch 'omp-plugins:') {
+              throw 'Installed RustySpork skill is not discovered as an OMP plugin'
+            }
+            Write-Output 'RSN OMP PACKAGED SKILL DISCOVERED'
+          } finally { Pop-Location }
+      - name: Validate four read-only role manifests (source only)
+        shell: pwsh
+        run: |
+          bun -e "const fs = require('node:fs'); const base='plugins/rsn-omp/agents/'; for (const n of ['rsn-causal','rsn-moe','rsn-evaluator','rsn-custodian']) { const s=fs.readFileSync(base+n+'.md','utf8'); const match=s.match(/^---\n([\s\S]*?)\n---\n/); if(!match) throw Error('Invalid frontmatter '+n); const m=Bun.YAML.parse(match[1]); if(m.name!==n || !m.description || String(m.tools).replaceAll(' ','')!=='read,grep,find') throw Error('Invalid role/privileged built-in tools '+n); console.log('RSN ROLE MANIFEST VERIFIED',n); }"
+          if ($LASTEXITCODE -ne 0) { throw 'Role frontmatter check failed' }
+      - name: Upload OMP discovery evidence only (no weights or API credentials)
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: rsn-omp-skills-${{ matrix.os }}-${{ github.run_number }}
+          retention-days: 7
+          if-no-files-found: warn
+          path: ${{ runner.temp }}/rsn-omp-skills.json
