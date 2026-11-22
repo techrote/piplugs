@@ -1,4 +1,4 @@
-name: CALS OMP native skill discovery smoke
+name: CALS OMP native skill and plugin smoke
 
 on:
   pull_request:
@@ -21,7 +21,7 @@ jobs:
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: '1.4.4'
-      - name: Install pinned OMP CLI for smoke test
+      - name: Install pinned OMP CLI
         shell: bash
         run: |
           set -euo pipefail
@@ -37,19 +37,41 @@ jobs:
           import json, sys
           with open(sys.argv[1], encoding='utf-8') as f:
               data = json.load(f)
-          hits = []
-          def inspect(value):
-              if isinstance(value, dict):
-                  if value.get("name") == "landscape-studio":
-                      hits.append(value)
-                  for sub in value.values():
-                      inspect(sub)
-              elif isinstance(value, list):
-                  for sub in value:
-                      inspect(sub)
-          inspect(data)
-          assert hits, "landscape-studio skill not discovered in OMP project"
-          print("OMP SKILL DISCOVERED", [(h.get("name"),h.get("filePath") or h.get("path")) for h in hits])
+          def walk(x):
+              if isinstance(x, dict):
+                  yield x
+                  for v in x.values(): yield from walk(v)
+              elif isinstance(x, list):
+                  for v in x: yield from walk(v)
+          hits = [d for d in walk(data) if d.get('name') == 'landscape-studio']
+          assert hits, 'landscape-studio project skill not found'
+          print('OMP PROJECT SKILL DISCOVERED', hits[0])
+          PY
+      - name: Test optional OMP extension command registration
+        shell: bash
+        run: bun test plugins/cals/tests/extension.test.ts
+      - name: Verify plugin link and independent skill discovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/cals-independent-consumer"
+          cd "$RUNNER_TEMP/cals-independent-consumer"
+          omp plugin link "$GITHUB_WORKSPACE/plugins/cals"
+          omp plugin list
+          omp skill list --json > "$RUNNER_TEMP/cals-packaged-skills.json"
+          python3 - "$RUNNER_TEMP/cals-packaged-skills.json" <<'PY'
+          import json, sys
+          with open(sys.argv[1], encoding='utf-8') as f:
+              data = json.load(f)
+          def walk(x):
+              if isinstance(x, dict):
+                  yield x
+                  for v in x.values(): yield from walk(v)
+              elif isinstance(x, list):
+                  for v in x: yield from walk(v)
+          hits = [d for d in walk(data) if d.get('name') == 'landscape-studio']
+          assert any('plugins/cals/skills/landscape-studio/SKILL.md' in str(h) for h in hits), hits
+          print('OMP PACKAGED SKILL DISCOVERED', hits[0])
           PY
       - name: Retain exact smoke evidence
         if: always()
@@ -58,4 +80,6 @@ jobs:
           name: cals-omp-smoke-${{ github.run_number }}
           retention-days: 7
           if-no-files-found: warn
-          path: ${{ runner.temp }}/cals-skills.json
+          path: |
+            ${{ runner.temp }}/cals-skills.json
+            ${{ runner.temp }}/cals-packaged-skills.json
