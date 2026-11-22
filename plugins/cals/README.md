@@ -1,6 +1,6 @@
 # CALS M0/M1 — small external CyberSand landscape-contract pilot
 
-**Status:** Offline proof only; no installed OMP extension, hosted model calls, CyberSand native execution or playable world produced.
+**Status:** Offline proof plus an installable OMP M1 package candidate. Linux OMP 19.1.0 skill discovery, separate-project plugin linking and four command tests passed CI; live agent conversations, Windows, GPTopus paid worker routing, CyberSand native execution and playability remain unqualified.
 
 This directory begins the implementation of the [CALS-001 plan](../../proposals/cybersand-landscape-swarm/README.md) and [CALS-RESEARCH-001](../../research/CALS-RESEARCH-001.md) without modifying CyberSand.
 
@@ -22,9 +22,25 @@ python3 -m unittest discover -s plugins/cals/tests -v
 
 The experimental skill resides at [`.omp/skills/landscape-studio/SKILL.md`](../../.omp/skills/landscape-studio/SKILL.md), a **native project skill** discoverable when OMP is launched in this repository with OMP-native skill discovery enabled. It instructs agents to negotiate first and treat receipts as authoritative. Use `omp skill list` or equivalent current-version discovery to verify it on an actual OMP installation; this environment has not done so.
 
-This is not yet a packaged OMP plugin. Installation into CyberSand, GitHub/other repositories or a shared user profile is explicitly postponed until the M0 API/permissions spike proves a safe integration route. The skill does not enforce budgets or filesystem permissions.
+### Optional packaged OMP plugin (experimental)
+
+The package at `plugins/cals/` includes an OMP `omp.extensions` manifest, `/cals status` and `/cals check` commands, a `skills/landscape-studio/SKILL.md` and four read-only specialist roles. The fixed Python validator executes without a shell, resolves symlinks and refuses fixture paths outside the working directory. It **does not** dispatch inference or modify CyberSand.
+
+From a checkout of `piplugs` with OMP installed:
+
+```sh
+omp plugin link ./plugins/cals
+omp plugin list
+omp skill list --json
+```
+
+After loading the extension in the interactive OMP session, run `/cals status` or `/cals check plugins/cals/fixtures/iron-wound-valid.json` (paths are relative to the active project/workspace; for an installed package in another project, provide a fixture there). On Windows the extension uses `py -3` by default, or a trusted `CALS_PYTHON` interpreter executable.
+
+**Verified Linux CI:** [OMP package run #45073732355](https://github.com/techrote/piplugs/actions/runs/45073732355) linked `@techrote/cals@0.1.0` from a distinct project and discovered its skill through `omp-plugins:user`; all **four Bun tests** passed. This verifies loading/registration and local contract checking, **not** worker spawning, messaging, paid policies or Windows installation. Headless tool permissions remain to be qualified in [issue #2](https://github.com/techrote/piplugs/issues/2).
 
 ## Source identity and caveats
+
+The route contract now also supports an ordered `via_joint_ids` sequence. Matching named regions and sockets is **not** proof that a route is navigable inside those regions; missing chains receive a graph-only warning.
 
 The sample includes an **illustrative** source SHA from the inspected CyberSand main; it does not imply a corresponding compiled native extension was loaded. Its material IDs are proposal fields only, not runtime-catalogue verification. The joint openings are declarations by agents; player clearance/route performance is untested.
 

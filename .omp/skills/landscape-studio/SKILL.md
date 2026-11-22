@@ -5,7 +5,7 @@ description: Coordinate a bounded, external, multi-agent CyberSand landscape-des
 
 # CALS — Landscape Studio (M1 experimental skill)
 
-**Status:** Planning and offline preflight only. This skill has not been smoke-tested in a running OMP session. It is not an OMP runtime extension, native CyberSand importer, sandbox or quota guard.
+**Status:** OMP project-skill discovery has been proven in Linux CI with OMP 19.1.0; a separate packaged extension and four role definitions are available under `plugins/cals/`. Live agent spawning, Windows runtime, native CyberSand import, sandboxing and quota enforcement remain untested.
 
 ## Objective and boundaries
 
@@ -49,7 +49,7 @@ python3 -m unittest discover -s plugins/cals/tests -v
 
 Expect the first fixture to return `PASS` (exit 0), the second to return `FAIL` (exit 1) with `SOCKET_MISMATCH`, and tests to pass. The fixtures are **author-declared geometric contracts**, not outputs from CyberSand. The valid case confirms two neighboring specialist proposals agree on exact shared openings; the invalid case represents an elevation mismatch at the viaduct/foundry seam.
 
-The validator checks explicit region bounds/nonoverlap, joint positions, proposal source/World Bible revisions, lease generations, socket claims, proposed edits against region ownership and protected space, and **region-graph** connectivity. It does **not** check real materials, physics, passage clearance, collision, native generation or Save/reopen.
+The validator checks explicit region bounds/nonoverlap, joint positions and **ordered `via_joint_ids`** (where supplied), proposal source/World Bible revisions, lease generations, socket claims, edits against region ownership/protected space, and **region-graph** connectivity. Missing ordered chains are reported as graph-only. It does **not** check real materials, physics, passage clearance, collision, native generation or Save/reopen.
 
 ## When actual native capabilities are established
 

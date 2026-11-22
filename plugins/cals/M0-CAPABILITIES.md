@@ -5,11 +5,12 @@
 | Capability | Source observation | Execution status |
 |---|---|---|
 | OMP native `task`, optional parallel batching, `agent://` and Agent Hub | [OMP task docs](https://github.com/can1357/oh-my-pi/blob/main/docs/tools/task.md) and [Agent Hub](https://github.com/can1357/oh-my-pi/blob/main/docs/agent-hub.md) at inspected SHA `ad9206d87c1685d539312e9a0f750dc6c526dd6f` | **SOURCE CONFIRMED; runtime UNTESTED** |
-| OMP native project skill discovery | [Skills docs](https://github.com/can1357/oh-my-pi/blob/main/docs/skills.md): `.omp/skills/<name>/SKILL.md` | **SOURCE CONFIRMED; runtime UNTESTED** |
+| OMP native project skill discovery | [Skills docs](https://github.com/can1357/oh-my-pi/blob/main/docs/skills.md): `.omp/skills/<name>/SKILL.md` | **LINUX CI VERIFIED:** OMP 19.1.0 / Bun 1.4.4, `omp skill list --json`; [run #45073106473](https://github.com/techrote/piplugs/actions/runs/45073106473) |
 | GPTopus quota/key split | [Chlaude-GPTopus](https://github.com/techrote/Chlaude-GPTopus), `usage.mjs`, `openai.mjs` at inspected `edd9392eae931ef19db82c84eb4d6d1167583fc4` | **SOURCE CONFIRMED; no OMP port and no billed call** |
 | CyberSand GEN-007/Workbench generated-start | [CyberSand contracts](https://github.com/techrote/cybersand/blob/main/docs/systems/explore001-generated-playable-maps.md) at inspected main `00cdb02f103265b6dc5224c68283e9a0c8cb449f` | **SOURCE CONFIRMED; native execution UNTESTED** |
-| Offline CALS document validator | `tools/validate_contracts.py` + fixture pair | **TESTED LOCALLY** via Python 3.13; see PR evidence |
-| OMP binary | No `omp` executable in this execution container | **UNAVAILABLE** |
+| Offline CALS document validator | `tools/validate_contracts.py`, route chain and fixture pair | **32/32 Python checks passed** in [GitHub CI run #45073732359](https://github.com/techrote/piplugs/actions/runs/45073732359); includes expected negative fixture |
+| OMP binary | No local executable; Linux CI installed pinned `@oh-my-pi/pi-coding-agent@19.1.0` | **LINUX CI VERIFIED**; Windows runtime unavailable |
+| OMP package link, skill and local command | `plugins/cals/package.json`, `src/index.ts`, `skills/landscape-studio`, `agents/` | **LINUX CI VERIFIED** in [run #45073732355](https://github.com/techrote/piplugs/actions/runs/45073732355); 4/4 Bun tests and independent package link. Real agent messaging/permissions untested. |
 | Godot executable/native CYSD runtime | No `godot` executable in this execution container | **UNAVAILABLE** |
 | Paid request-level policy enforcement, cross-host ledger sharing | Need actual provider/auth lifecycle spike | **BLOCKED / NOT IMPLEMENTED** |
 | Noninteractive Workbench native material application | Requires verified existing source route and source-matched build | **UNTESTED** |
