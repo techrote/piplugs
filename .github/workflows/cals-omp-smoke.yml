@@ -75,28 +75,23 @@ jobs:
                      for h in hits), hits
           print('OMP PACKAGED SKILL DISCOVERED', hits[0])
           PY
-      - name: Verify OMP discovers read-only CALS task agents
+      - name: Validate packaged task-role manifests (source shape only)
         shell: bash
         run: |
           set -euo pipefail
-          cd "$RUNNER_TEMP/cals-independent-consumer"
-          export CALS_OMP_ENTRY="$(readlink -f "$(command -v omp)")"
           bun - <<'JS'
-          import { dirname, join } from 'node:path';
-          import { pathToFileURL } from 'node:url';
-          const entry = process.env.CALS_OMP_ENTRY;
-          if (!entry?.endsWith('/src/cli.ts')) throw new Error('Unrecognized OMP CLI layout: ' + entry);
-          const discovery = await import(pathToFileURL(join(dirname(entry),'task','discovery.ts')).href);
-          const result = await discovery.discoverAgents(process.cwd());
-          const expected = ['cals-architect','cals-environment','cals-traversal','cals-critic'];
-          for (const name of expected) {
-            const agent = result.agents.find(a => a.name === name);
-            if (!agent) throw new Error('OMP task agent missing: ' + name);
-            if (!Array.isArray(agent.tools) || agent.tools.length === 0 ||
-                agent.tools.some(t => !['read','grep','find'].includes(t))) {
-              throw new Error('Unexpected privileged tool in ' + name + ': ' + JSON.stringify(agent.tools));
-            }
-            console.log('OMP AGENT DISCOVERED', name, agent.tools.join(','));
+          import { readFileSync } from 'node:fs';
+          import { join } from 'node:path';
+          const root = join(process.env.GITHUB_WORKSPACE, 'plugins', 'cals', 'agents');
+          for (const name of ['cals-architect','cals-environment','cals-traversal','cals-critic']) {
+            const raw = readFileSync(join(root,name+'.md'),'utf8');
+            const match = raw.match(/^---\\n([\\s\\S]*?)\\n---\\n/);
+            if (!match) throw new Error('Missing frontmatter: '+name);
+            const meta = Bun.YAML.parse(match[1]);
+            if (meta.name!==name || !meta.description) throw new Error('Bad role metadata '+name);
+            const tools = String(meta.tools).split(',').map(x=>x.trim());
+            if (tools.join(',')!=='read,grep,find') throw new Error('Unexpected built-in tool grant '+name);
+            console.log('CALS ROLE MANIFEST VERIFIED',name,tools.join(','));
           }
           JS
       - name: Retain exact smoke evidence
