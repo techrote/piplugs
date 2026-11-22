@@ -39,6 +39,8 @@ A native state receipt additionally records platform, Godot version, generation 
 
 **Determinism:** Seeds are explicit, stable per region and operation. Canonicalization/hashing must be documented and tested across JSON roundtrips (including int/float behavior). Never use hash stability as a substitute for same-source native generation validation.
 
+**Canonical World Bible digest (no self-reference):** Compute `world_bible_sha256` over a canonical JSON serialization of the accepted Bible with that *digest field omitted*, using a documented stable key order, Unicode encoding and numeric normalization. All dependent documents use that same digest; test that verifying and reserializing never changes it. Never hash a document that includes its own computed hash.
+
 ## 2. World Bible and intent
 
 `world-bible.v1` is the single accepted macro design authority. Before construction, the director obtains a concept and freezes enough of the document to make region work safe. Later revisions invalidate affected work.
