@@ -17,6 +17,8 @@ import sys
 SCHEMA = "piplugs.cals.offline-contract-fixture"
 MAX_BYTES = 1024 * 1024
 MAX_CELLS = 4_194_304
+MAX_SIDE = 16_384
+MAX_PROTECTED = 1_024
 MAX_REGIONS = 32
 MAX_JOINTS = 64
 MAX_EDITS = 2048
@@ -88,8 +90,10 @@ def validate(data: object) -> dict:
         fail("CANVAS", "Positive integer width/height required.")
         return {"status": "FAIL", "errors": errors, "warnings": warnings}
     width, height = canvas["width"], canvas["height"]
-    if width * height > MAX_CELLS:
-        fail("CANVAS_CAP", f"Offline fixture canvas exceeds {MAX_CELLS} cells.")
+    if width * height > MAX_CELLS or width > MAX_SIDE or height > MAX_SIDE:
+        fail("CANVAS_CAP", f"Offline fixture canvas exceeds {MAX_CELLS} cells or {MAX_SIDE} on an axis.")
+    if canvas.get("orientation") != "orthographic-side-elevation":
+        fail("PROJECTION", "CALS pilot requires exact orthographic side elevation.")
     extent = (0, 0, width, height)
     regions_raw = bible.get("regions")
     regions: dict[str, tuple[int, int, int, int]] = {}
@@ -147,6 +151,19 @@ def validate(data: object) -> dict:
         if not isinstance(joint.get("socket_id"), str) or NAME.fullmatch(joint["socket_id"]) is None:
             fail("JOINT_SOCKET", jid)
 
+    # Validate protected cells exactly once, even when proposals are absent.
+    protection = bible.get("protected", [])
+    if not isinstance(protection, list) or len(protection) > MAX_PROTECTED:
+        fail("PROTECTED", f"Protected regions must be an array of at most {MAX_PROTECTED} rectangles.")
+        protection = []
+    protected_rects: list[tuple[int, int, int, int]] = []
+    for index, item in enumerate(protection):
+        pr = rect(item)
+        if pr is None or not inside(pr, extent):
+            fail("PROTECTED_BOUNDS", f"Invalid protected rectangle at index {index}.")
+        else:
+            protected_rects.append(pr)
+
     proposals_raw = data.get("proposals")
     proposals: dict[str, dict] = {}
     if not isinstance(proposals_raw, list) or len(proposals_raw) > MAX_REGIONS:
@@ -171,17 +188,6 @@ def validate(data: object) -> dict:
         if not isinstance(allowed, list) or len(allowed) > MAX_EDITS:
             fail("EDIT_COUNT", f"{rid}: edits must be an array of at most {MAX_EDITS}.")
             allowed = []
-        protection = bible.get("protected", [])
-        if not isinstance(protection, list):
-            fail("PROTECTED", "protected must be an array.")
-            protection = []
-        protected_rects = []
-        for item in protection:
-            pr = rect(item)
-            if pr is None or not inside(pr, extent):
-                fail("PROTECTED_BOUNDS", f"Invalid protected rectangle {item!r}.")
-            else:
-                protected_rects.append(pr)
         for index, edit in enumerate(allowed):
             if (not isinstance(edit, list) or len(edit) != 5 or
                     not integer(edit[4]) or rect(edit[:4]) is None):
@@ -246,6 +252,33 @@ def validate(data: object) -> dict:
                 fringe.append(nxt)
         if finish not in reachable:
             fail("ROUTE_DISCONNECTED", f"{route['id']}: region graph disconnected.")
+        # This is a route *contract sequence*, never a physical playability proof.
+        chain = route.get("via_joint_ids")
+        if chain is None:
+            warnings.append(f"{route['id']}: no ordered via_joint_ids; only region-graph reachability checked.")
+        elif not isinstance(chain, list) or len(chain) > MAX_JOINTS or any(
+                not isinstance(jid, str) for jid in chain):
+            fail("ROUTE_SEQUENCE", f"{route['id']}: via_joint_ids must be a bounded array of string joint IDs.")
+        else:
+            current = start
+            seen_joint_ids: set[str] = set()
+            for jid in chain:
+                joint = joints.get(jid)
+                if joint is None or jid in seen_joint_ids:
+                    fail("ROUTE_SEQUENCE", f"{route['id']}: unknown or repeated joint {jid!r}.")
+                    break
+                seen_joint_ids.add(jid)
+                left, right = joint.get("left"), joint.get("right")
+                if current == left and right in regions:
+                    current = right
+                elif current == right and left in regions:
+                    current = left
+                else:
+                    fail("ROUTE_SEQUENCE", f"{route['id']}: joint {jid!r} not adjacent to {current!r}.")
+                    break
+            else:
+                if current != finish:
+                    fail("ROUTE_SEQUENCE", f"{route['id']}: sequence ends at {current!r} instead of {finish!r}.")
     return {"status": "PASS" if not errors else "FAIL", "errors": errors,
             "warnings": warnings, "checked": {"regions": len(regions),
                 "joints": len(joints), "proposals": len(proposals), "routes": len(routes)}}
@@ -260,8 +293,16 @@ def main(argv: list[str] | None = None) -> int:
             raise ValueError(f"JSON exceeds {MAX_BYTES} byte safety cap")
         def reject_non_json_constant(value: str) -> None:
             raise ValueError(f"JSON non-finite number rejected: {value}")
+        def reject_duplicate_keys(pairs: list[tuple[str, object]]) -> dict:
+            result = {}
+            for key, value in pairs:
+                if key in result:
+                    raise ValueError(f"Duplicate JSON key rejected: {key!r}")
+                result[key] = value
+            return result
         data = json.loads(args.fixture.read_text(encoding="utf-8"),
-                          parse_constant=reject_non_json_constant)
+                          parse_constant=reject_non_json_constant,
+                          object_pairs_hook=reject_duplicate_keys)
         report = validate(data)
     except (OSError, ValueError, UnicodeError) as exc:
         report = {"status": "FAIL", "errors": [{"code": "INPUT", "detail": str(exc)}], "warnings": []}

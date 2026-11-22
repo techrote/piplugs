@@ -26,7 +26,8 @@ def fixture():
             {'id': 'viaduct-reservoir', 'left': 'viaduct', 'right': 'reservoir',
              'revision': 1, 'x': 1360, 'y': 432, 'height': 48, 'socket_id': 'main-landing'}
         ],
-        'routes': [{'id': 'main-route', 'from_region': 'foundry', 'to_region': 'reservoir'}],
+        'routes': [{'id': 'main-route', 'from_region': 'foundry', 'to_region': 'reservoir',
+                    'via_joint_ids': ['foundry-viaduct', 'viaduct-reservoir']}],
         'protected': [[40, 432, 1968, 48]],
         'design_note': 'Illustrative geometry only; sockets are agreed but no actual traversability is proved.'
     }

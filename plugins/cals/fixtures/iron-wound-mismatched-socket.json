@@ -163,9 +163,13 @@
       {
         "from_region": "foundry",
         "id": "main-route",
-        "to_region": "reservoir"
+        "to_region": "reservoir",
+        "via_joint_ids": [
+          "foundry-viaduct",
+          "viaduct-reservoir"
+        ]
       }
     ],
-    "world_bible_sha256": "d9a8a88aacfbd2722714dd6bb1d39453f833e2614f6035352474f6def29bc80c"
+    "world_bible_sha256": "fb835b41d8c3cb60401afd74b14bd645c9171f4eb3adb0d6a7648bdca0f1221f"
   }
 }

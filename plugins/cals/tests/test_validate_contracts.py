@@ -100,6 +100,51 @@ class ContractValidationTests(unittest.TestCase):
         self.check_error(lambda d: d['proposals'][0].update(world_bible_revision=True), 'STALE_PROPOSAL')
         self.check_error(lambda d: d['proposals'][0].update(lease_generation=True), 'STALE_LEASE')
 
+    def test_non_orthographic_projection_refused(self):
+        self.check_error(lambda d: d['world_bible']['canvas'].update(orientation='isometric'), 'PROJECTION')
+
+    def test_extreme_skinny_canvas_refused(self):
+        self.check_error(lambda d: d['world_bible']['canvas'].update(width=32768, height=1), 'CANVAS_CAP')
+
+    def test_invalid_protection_checked_without_proposal(self):
+        def mut(d):
+            d['proposals'] = []
+            d['world_bible']['protected'] = [[-1, 5, 10, 10]]
+        self.check_error(mut, 'PROTECTED_BOUNDS')
+
+    def test_route_joint_sequence_wrong_order(self):
+        self.check_error(lambda d: d['world_bible']['routes'][0].update(
+            via_joint_ids=['viaduct-reservoir', 'foundry-viaduct']), 'ROUTE_SEQUENCE')
+
+    def test_route_joint_sequence_missing_link(self):
+        self.check_error(lambda d: d['world_bible']['routes'][0].update(
+            via_joint_ids=['foundry-viaduct']), 'ROUTE_SEQUENCE')
+
+    def test_route_joint_sequence_duplicate_joint(self):
+        self.check_error(lambda d: d['world_bible']['routes'][0].update(
+            via_joint_ids=['foundry-viaduct', 'foundry-viaduct']), 'ROUTE_SEQUENCE')
+
+    def test_route_joint_sequence_unknown_joint(self):
+        self.check_error(lambda d: d['world_bible']['routes'][0].update(
+            via_joint_ids=['absent']), 'ROUTE_SEQUENCE')
+
+    def test_missing_route_sequence_is_explicitly_unverified(self):
+        d = copy.deepcopy(self.good)
+        del d['world_bible']['routes'][0]['via_joint_ids']
+        d['world_bible']['world_bible_sha256'] = v.digest(d['world_bible'])
+        result = v.validate(d)
+        self.assertEqual(result['status'], 'PASS')
+        self.assertTrue(any('only region-graph reachability' in x for x in result['warnings']))
+
+    def test_duplicate_json_key_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'duplicate.json'
+            path.write_text("""{"schema_id":"x","schema_id":"x"}""" , encoding='utf-8')
+            proc = subprocess.run([sys.executable, str(VALIDATOR), str(path)],
+                                  capture_output=True, text=True)
+            self.assertEqual(proc.returncode, 1)
+            self.assertIn('Duplicate JSON key', proc.stdout)
+
     def test_cli_exit_codes(self):
         good = subprocess.run([sys.executable, str(VALIDATOR), str(GOOD)], capture_output=True, text=True)
         self.assertEqual(good.returncode, 0, good.stderr + good.stdout)
