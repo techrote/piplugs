@@ -3,6 +3,15 @@
 **Read-only source inventory conducted:** 2026-11-22.  
 **Status:** These observations are based on repository files and metadata; **none is a live OMP/GPTopus/CyberSand integration test**. Source may advance after the recorded commits.
 
+## Contents
+
+1. [Baselines and provenance](#1-baselines-and-provenance) — Freeze the source identities reviewed for this proposal.
+2. [GPTopus](#2-gptopus--what-actually-exists) — Distinguish portable policy from Claude Code-only hooks.
+3. [Oh-My-PI](#3-oh-my-pi--existing-native-features) — Identify maintained native orchestration capabilities.
+4. [CyberSand](#4-cybersand--current-source-boundaries) — Identify genuine engine authority and candidate-only features.
+5. [Unverified assumptions](#5-unverified-assumptions-and-research-tasks) — Record what must be proved before implementation.
+6. [Publication and claims discipline](#6-publication-and-claims-discipline) — Keep future runtime evidence separate from repository source.
+
 ## 1. Baselines and provenance
 
 | Source | Inspected identity | Design role |
